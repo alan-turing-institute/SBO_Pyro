@@ -56,7 +56,7 @@ normal_Phi = lambda x: (1 + torch.erf(x / np.sqrt(2))) / 2
 
 class SemiParametricModel(PyroModule):
 
-    def __init__(self, X, y, parametric_mean, kernel):
+    def __init__(self, X, y, parametric_mean, kernel, jitter=1e-06):
         """ Defines a semi-parametric model, where the `parametric_mean` is a `PyroModule` """
         super().__init__()
 
@@ -66,7 +66,7 @@ class SemiParametricModel(PyroModule):
         self.parametric_mean = parametric_mean
 
         self.kernel = kernel
-        self.gp = gp.models.GPRegression(X, y, self.kernel)
+        self.gp = gp.models.GPRegression(X, y, self.kernel, jitter=jitter)
 
     @pyro.nn.pyro_method
     def model(self):
@@ -164,7 +164,7 @@ def find_a_candidate(model_predict, return_site, optimizer, x_init, constr, num_
     x_uncon = x_uncon_init.clone().detach().requires_grad_(True)
 
     minimizer = optimizer([x_uncon], lr=lr)
-    
+
     def closure():
         minimizer.zero_grad()
         x = transf_values(x_uncon, constr, x_dims)
@@ -216,7 +216,7 @@ def next_x(model_predict, return_site, optimizer, target, num_steps=1000, num_ca
 
             y_init = model_predict(x_init)[return_site].mean(0)
 
-            # since we are minimising, we check 
+            # since we are minimising, we check
             if y_init < 0.0:
                 break
 
@@ -230,14 +230,14 @@ def next_x(model_predict, return_site, optimizer, target, num_steps=1000, num_ca
 
 def update_posterior(model, optimizer, loss, obj_function, x_new, num_steps=1000):
     """
-    Updates 
-        model: 
-        optimizer: 
+    Updates
+        model:
+        optimizer:
         loss:
         obj_function: objectivefunction
         x_new: a new value of x
-        num_steps: 
-        
+        num_steps:
+
     """
 
     # evaluate f at new point
@@ -258,23 +258,23 @@ def update_posterior(model, optimizer, loss, obj_function, x_new, num_steps=1000
     return guide, losses
 
 
-def step(model, 
-         guide, 
-         optimizer, 
-         loss, 
-         target, 
-         acqf_optimizer, 
+def step(model,
+         guide,
+         optimizer,
+         loss,
+         target,
+         acqf_optimizer,
          opti_num_steps=1000,
-         acqf_opti_num_steps=1000, 
+         acqf_opti_num_steps=1000,
          acqf_opti_lr=0.1,
-         num_samples=1, 
-         num_candidates=5, 
+         num_samples=1,
+         num_candidates=5,
          return_site='EI'):
     """
     Performs a bayesian optimisation step. This includes generating a predictive model,
-        which is used to find a new value of x at which the target function needs to be 
+        which is used to find a new value of x at which the target function needs to be
         evaluated, and updating the model after the new x is obtained.
-        
+
         model:
         guide:
         optimizer:
@@ -287,26 +287,26 @@ def step(model,
         num_candidates:
         return_site:
     """
-    
+
     if guide is not None:
-        
+
         # TODO: copy.copy is a hack around predictive model being linked with a model
         # Constructs predictive distribution
-        predict = pyro.infer.Predictive(copy.copy(model), guide=guide, 
-                                        num_samples=num_samples, return_sites=(return_site, ))
-        
-        # Finds the next candidate 
+        predict = pyro.infer.Predictive(copy.copy(model), guide=guide,
+                                        num_samples=num_samples, return_sites=('y', return_site))
+
+        # Finds the next candidate
         x_new = next_x(predict, return_site, acqf_optimizer, target,
-                        num_steps=acqf_opti_num_steps, num_candidates=num_candidates, 
+                        num_steps=acqf_opti_num_steps, num_candidates=num_candidates,
                         num_samples=num_samples, lr=acqf_opti_lr)
-            
+
         # Updates posterior
-        new_guide, losses = update_posterior(model, optimizer, loss, target, 
+        new_guide, losses = update_posterior(model, optimizer, loss, target,
                                             x_new, num_steps=opti_num_steps)
     else:
         predict = None
 
         # trains the model
         new_guide, losses = train(model, optimizer, loss, num_steps=opti_num_steps)
-    
+
     return new_guide, predict, losses
