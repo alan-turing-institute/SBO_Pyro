@@ -1,1 +1,11 @@
+stats/
+
+pyro_results/
+
+examples/sbo_egg_holder.ipynb
+
+__pycache__
+
+.vscode/
+
 .ipynb_checkpoints/
