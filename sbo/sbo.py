@@ -7,7 +7,6 @@ Valentin Dalibard, Michael Schaarschmidt, Eiko Yoneki
 
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -97,31 +96,6 @@ class SemiParametricModel(PyroModule):
 
         # return the mean, in case we want to ignore the GP noise for some reason later
         return y_hat
-
-
-def plot2D_obj(func, func_ranges, steps=100, strides=200):
-    """Plots contour plot of a 2D function"""
-
-    x1 = torch.linspace(func_ranges[0][0], func_ranges[0][1], steps)
-    x2 = torch.linspace(func_ranges[1][0], func_ranges[1][1], steps)
-
-    x1_mesh, x2_mesh = torch.meshgrid(x1, x2)
-
-    Z_mesh = func(torch.stack((x1_mesh.flatten(), x2_mesh.flatten()),
-                              dim=1)).reshape(steps, steps)
-
-    plt.contourf(x1_mesh.detach().numpy(),
-                 x2_mesh.detach().numpy(),
-                 Z_mesh.detach().numpy(), strides)
-
-    plt.colorbar()
-
-
-def set_random_seed(seed):
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
 
 
 def train(model, optimizer, loss, num_steps=1000):
