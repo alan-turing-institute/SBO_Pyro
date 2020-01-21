@@ -162,8 +162,10 @@ def next_x(model_predict, return_site, optimizer, target, num_steps=1000, num_ca
     candidates = []
     values = []
 
-    # start with the last step
-    x_init = model_predict.model.X[-1:]
+    # starts with the best candidate so far
+    min_y = model_predict(model_predict.model.X)[return_site].mean(0)
+
+    x_init = (model_predict.model.X[torch.min(min_y, dim=0)[1].item()]).unsqueeze(dim=0)
 
     for _ in range(num_candidates):
         x_can = find_a_candidate(model_predict, return_site,
