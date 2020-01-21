@@ -99,7 +99,7 @@ class SemiParametricModel(PyroModule):
 
 
 def train(model, optimizer, loss, num_steps=1000):
-    """ Trains the semi-parametric model. """
+    """ Trains a model. """
 
     # Autoguide
     guide = autoguide.AutoMultivariateNormal(model.model)
@@ -234,34 +234,15 @@ def update_posterior(model, optimizer, loss, obj_function, x_new, num_steps=1000
     return guide, losses
 
 
-def step(model,
-         guide,
-         optimizer,
-         loss,
-         target,
-         acqf_optimizer,
-         opti_num_steps=1000,
-         acqf_opti_num_steps=1000,
-         acqf_opti_lr=0.1,
-         num_samples=1,
-         num_candidates=5,
-         return_site='EI'):
+def step(model, guide, optimizer, loss, target, acqf_optimizer, opti_num_steps=1000, 
+         acqf_opti_num_steps=1000, acqf_opti_lr=0.1, num_samples=1, num_candidates=5, return_site='EI'):
     """
-    Performs a bayesian optimisation step. This includes generating a predictive model,
-        which is used to find a new value of x at which the target function needs to be
-        evaluated, and updating the model after the new x is obtained.
+    Performs a bayesian optimisation step. 
+    
+    This involves generating a predictive model, which is then used to find a new value of x at 
+    which the target function needs to be evaluated, and updating the model after the new 
+    x is obtained.
 
-        model:
-        guide:
-        optimizer:
-        loss:
-        target:
-        acqf_optimizer:
-        opti_num_steps:
-        acqf_opti_num_steps:
-        num_samples:
-        num_candidates:
-        return_site:
     """
 
     if guide is not None:
