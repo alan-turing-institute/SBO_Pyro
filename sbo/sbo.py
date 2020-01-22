@@ -97,6 +97,38 @@ class SemiParametricModel(PyroModule):
         # return the mean, in case we want to ignore the GP noise for some reason later
         return y_hat
 
+class GPRegressionModule(PyroModule):
+
+    def __init__(self, X, y, kernel):
+        """ Defines a PyroModule which wraps GPRegression """
+        super().__init__()
+        self.X = X
+        self.y = y
+        self.kernel = kernel
+        self.gp = gp.models.GPRegression(X, y, self.kernel)
+
+    @pyro.nn.pyro_method
+    def model(self):
+        return self.gp.model()
+        
+    def forward(self, X):
+        ''' Predict on new data points '''
+        # sample mu, sigma
+        mu, sigma = self.gp(X)
+        
+        # sample value of y
+        pyro.sample('y', dist.Normal(mu, sigma))
+    
+        # compute expected improvement
+        y_min = self.y.min()
+        delta = y_min - mu
+        EI = delta.clamp_min(0.0) + sigma*normal_phi(delta/sigma) - delta.abs()*normal_Phi(delta/sigma)
+                
+        pyro.sample('EI', dist.Delta(-EI))
+
+        # return the mean, in case we want to ignore the GP noise for some reason later
+        return mu
+
 
 def train(model, optimizer, loss, num_steps=1000):
     """ Trains a model. """
