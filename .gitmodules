@@ -1,0 +1,4 @@
+[submodule "examples/vegetation/pyveg"]
+	path = examples/vegetation/monitoring-ecosystem-resilience
+	url = https://github.com/alan-turing-institute/monitoring-ecosystem-resilience
+	branch = feature/test-ndvi
