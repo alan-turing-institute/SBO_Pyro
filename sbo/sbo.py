@@ -7,6 +7,7 @@ Valentin Dalibard, Michael Schaarschmidt, Eiko Yoneki
 
 import copy
 import numpy as np
+import math
 
 import torch
 import torch.nn as nn
@@ -110,20 +111,20 @@ class GPRegressionModule(PyroModule):
     @pyro.nn.pyro_method
     def model(self):
         return self.gp.model()
-        
+
     def forward(self, X):
         ''' Predict on new data points '''
         # sample mu, sigma
         mu, sigma = self.gp(X)
-        
+
         # sample value of y
         pyro.sample('y', dist.Normal(mu, sigma))
-    
+
         # compute expected improvement
         y_min = self.y.min()
         delta = y_min - mu
         EI = delta.clamp_min(0.0) + sigma*normal_phi(delta/sigma) - delta.abs()*normal_Phi(delta/sigma)
-                
+
         pyro.sample('EI', dist.Delta(-EI))
 
         # return the mean, in case we want to ignore the GP noise for some reason later
@@ -209,8 +210,9 @@ def next_x(model_predict, return_site, optimizer, target, num_steps=1000, num_ca
 
         y = model_predict(x_can)[return_site].mean(0)
 
-        candidates.append(x_can)
-        values.append(y.detach())
+        if not math.isnan(float(y.detach())):
+            candidates.append(x_can)
+            values.append(y.detach())
 
         # a new random attempt initial point
         for _ in range(100):
@@ -249,11 +251,11 @@ def update_posterior(model, optimizer, loss, obj_function, x_new, num_steps=1000
     """
 
     # evaluate f at new point
-    bh_y = obj_function.eval(x_new)
+    obj_y = obj_function.eval(x_new)
 
     # incorporate new evaluation
     X = torch.cat([model.X, x_new])
-    y = torch.cat([model.y, bh_y])
+    y = torch.cat([model.y, obj_y])
 
     model.X = X
     model.y = y
@@ -266,13 +268,13 @@ def update_posterior(model, optimizer, loss, obj_function, x_new, num_steps=1000
     return guide, losses
 
 
-def step(model, guide, optimizer, loss, target, acqf_optimizer, opti_num_steps=1000, 
+def step(model, guide, optimizer, loss, target, acqf_optimizer, opti_num_steps=1000,
          acqf_opti_num_steps=1000, acqf_opti_lr=0.1, num_samples=1, num_candidates=5, return_site='EI'):
     """
-    Performs a bayesian optimisation step. 
-    
-    This involves generating a predictive model, which is then used to find a new value of x at 
-    which the target function needs to be evaluated, and updating the model after the new 
+    Performs a bayesian optimisation step.
+
+    This involves generating a predictive model, which is then used to find a new value of x at
+    which the target function needs to be evaluated, and updating the model after the new
     x is obtained.
 
     """
