@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
+
 def set_random_seed(seed):
     r"""Sets the seed for generating random numbers
 
@@ -37,11 +38,15 @@ def plot2d_func(func, func_ranges, steps=100, levels=200):
 
     x1_mesh, x2_mesh = torch.meshgrid(x1_steps, x2_steps)
 
-    z_mesh = func(torch.stack((x1_mesh.flatten(), x2_mesh.flatten()),
-                              dim=1)).reshape(steps, steps)
+    z_mesh = func(torch.stack((x1_mesh.flatten(), x2_mesh.flatten()), dim=1)).reshape(
+        steps, steps
+    )
 
-    plt.contourf(x1_mesh.detach().numpy(),
-                 x2_mesh.detach().numpy(),
-                 z_mesh.detach().numpy(), levels)
+    plt.contourf(
+        x1_mesh.detach().numpy(),
+        x2_mesh.detach().numpy(),
+        z_mesh.detach().numpy(),
+        levels,
+    )
 
     plt.colorbar()
