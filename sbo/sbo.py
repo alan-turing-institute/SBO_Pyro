@@ -53,7 +53,7 @@ class TargetFunction:
 
 
 class SemiParametricModel(PyroModule):
-    def __init__(self, X, y, parametric_mean, kernel, jitter=1e-06):
+    def __init__(self, X, y, parametric_mean, kernel, noise=None, jitter=1e-06):
         """ Defines a semi-parametric model, where the `parametric_mean` is a `PyroModule` """
         super().__init__()
 
@@ -63,7 +63,7 @@ class SemiParametricModel(PyroModule):
         self.parametric_mean = parametric_mean
 
         self.kernel = kernel
-        self.gp = gp.models.GPRegression(X, y, self.kernel, jitter=jitter)
+        self.gp = gp.models.GPRegression(X, y, self.kernel, noise=noise, jitter=jitter)
 
     @pyro.nn.pyro_method
     def model(self):
@@ -174,8 +174,7 @@ def find_a_candidate(
     constr,
     num_steps=1000,
     num_samples=5,
-    lr=0.1,
-):
+    lr=0.1):
     """ Finds new candidate """
 
     x_dims = x_init.shape[-1]
