@@ -178,7 +178,7 @@ class GPRegressionModule(PyroModule):
         return self.gp.model()
 
     def forward(self, X):
-         """
+        """
         Computes the mean and covariance matrix (or variance) of Gaussian Process posterior. Then the 
             obtained mean value is used to sample values for $y$, which in turn are used to sample the
             expected improvement values.
