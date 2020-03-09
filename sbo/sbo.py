@@ -391,7 +391,7 @@ def update_posterior(model, optimizer, loss, target, x_new, num_steps=1000):
     """
 
     # evaluate f at new point
-    obj_y = obj_function.eval(x_new)
+    obj_y = target.eval(x_new)
 
     # incorporate new evaluation
     X = torch.cat([model.X, x_new])
